@@ -29,7 +29,7 @@ Public Class frmProducts
         Try
             Using conn As New MySqlConnection("server=localhost;user id=root;password=;database=pos_grocery1")
                 conn.Open()
-                Dim query As String = "SELECT ProductID, ItemName, Category, Price, Barcode FROM Products"
+                Dim query As String = "SELECT ProductID, ItemName, Category, Price, Barcode FROM products"
                 Using cmd As New MySqlCommand(query, conn)
                     Using dr As MySqlDataReader = cmd.ExecuteReader()
                         While dr.Read()
@@ -65,8 +65,11 @@ Public Class frmProducts
     ' Add new product
     ' -----------------------
     Private Sub btnAdd_Click(sender As Object, e As EventArgs) Handles btnAdd.Click
+        ' -----------------------
         ' Validation
-        If String.IsNullOrWhiteSpace(txtItemName.Text) Or cmbCategory.SelectedIndex = -1 Or String.IsNullOrWhiteSpace(txtPrice.Text) Or String.IsNullOrWhiteSpace(txtBarcode.Text) Then
+        ' -----------------------
+        If String.IsNullOrWhiteSpace(txtItemName.Text) OrElse cmbCategory.SelectedIndex = -1 _
+       OrElse String.IsNullOrWhiteSpace(txtPrice.Text) OrElse String.IsNullOrWhiteSpace(txtBarcode.Text) Then
             MessageBox.Show("Please fill in all fields.", "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
             Return
         End If
@@ -78,24 +81,54 @@ Public Class frmProducts
             Return
         End If
 
-        ' Check duplicate barcode
-        For Each item As ListViewItem In lvProducts.Items
-            If item.SubItems(4).Text.Trim() = txtBarcode.Text.Trim() Then
-                MessageBox.Show("This barcode already exists.", "Duplicate Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
-                txtBarcode.Focus()
-                Return
-            End If
-        Next
+        ' -----------------------
+        ' Check duplicate barcode in database
+        ' -----------------------
+        Try
+            Using conn As New MySqlConnection("server=localhost;user id=root;password=;database=pos_grocery1")
+                conn.Open()
 
-        ' Add to ListView (ID empty for new item)
-        Dim lvItem As New ListViewItem("")
-        lvItem.SubItems.Add(txtItemName.Text.Trim())
-        lvItem.SubItems.Add(cmbCategory.SelectedItem.ToString())
-        lvItem.SubItems.Add(price.ToString("F2"))
-        lvItem.SubItems.Add(txtBarcode.Text.Trim())
-        lvProducts.Items.Add(lvItem)
+                Dim checkSql As String = "SELECT COUNT(*) FROM Products WHERE Barcode=@Barcode"
+                Using checkCmd As New MySqlCommand(checkSql, conn)
+                    checkCmd.Parameters.AddWithValue("@Barcode", txtBarcode.Text.Trim())
+                    Dim count As Integer = Convert.ToInt32(checkCmd.ExecuteScalar())
+                    If count > 0 Then
+                        MessageBox.Show("This barcode already exists in the database.", "Duplicate Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                        txtBarcode.Focus()
+                        Return
+                    End If
+                End Using
 
-        ClearInputs()
+                ' -----------------------
+                ' Insert into database
+                ' -----------------------
+                Dim insertSql As String = "INSERT INTO Products (ItemName, Category, Price, Barcode) VALUES (@ItemName, @Category, @Price, @Barcode); SELECT LAST_INSERT_ID();"
+                Using insertCmd As New MySqlCommand(insertSql, conn)
+                    insertCmd.Parameters.AddWithValue("@ItemName", txtItemName.Text.Trim())
+                    insertCmd.Parameters.AddWithValue("@Category", cmbCategory.SelectedItem.ToString())
+                    insertCmd.Parameters.AddWithValue("@Price", price)
+                    insertCmd.Parameters.AddWithValue("@Barcode", txtBarcode.Text.Trim())
+
+                    ' Get the new ProductID
+                    Dim newID As Integer = Convert.ToInt32(insertCmd.ExecuteScalar())
+
+                    ' -----------------------
+                    ' Add to ListView
+                    ' -----------------------
+                    Dim lvItem As New ListViewItem(newID.ToString())
+                    lvItem.SubItems.Add(txtItemName.Text.Trim())
+                    lvItem.SubItems.Add(cmbCategory.SelectedItem.ToString())
+                    lvItem.SubItems.Add(price.ToString("F2"))
+                    lvItem.SubItems.Add(txtBarcode.Text.Trim())
+                    lvProducts.Items.Add(lvItem)
+
+                    MessageBox.Show("Product added successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                    ClearInputs()
+                End Using
+            End Using
+        Catch ex As Exception
+            MessageBox.Show("Error adding product: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
     ' -----------------------
@@ -261,4 +294,7 @@ Public Class frmProducts
         txtItemName.Focus()
     End Sub
 
+    Private Sub txtBarcode_TextChanged(sender As Object, e As EventArgs) Handles txtBarcode.TextChanged
+
+    End Sub
 End Class

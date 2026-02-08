@@ -10,8 +10,7 @@
         Public Property currentUserID As Integer
         ' Function to get a new connection
         Public Function GetConnection() As MySqlConnection
-        Return New MySqlConnection("server=192.168.0.185;database=pos_grocery1;uid=root;pwd")
-
+        Return New MySqlConnection("server=localhost;userid=root;password=;database=pos_grocery1")
     End Function
 
 

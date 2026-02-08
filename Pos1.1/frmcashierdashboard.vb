@@ -75,4 +75,8 @@ Public Class frmcashierdashboard
     Private Sub lblCustomers_Click(sender As Object, e As EventArgs) Handles lblCustomers.Click
 
     End Sub
+
+    Private Sub pnlStats_Paint(sender As Object, e As PaintEventArgs) Handles pnlStats.Paint
+
+    End Sub
 End Class

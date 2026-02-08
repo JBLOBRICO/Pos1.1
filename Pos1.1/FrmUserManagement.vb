@@ -196,4 +196,7 @@ Public Class FrmUserManagement
         dgvUsers.ClearSelection()
     End Sub
 
+    Private Sub PanelTop_Paint(sender As Object, e As PaintEventArgs) Handles PanelTop.Paint
+
+    End Sub
 End Class

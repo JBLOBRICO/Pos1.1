@@ -168,4 +168,7 @@ Public Class frmNewSale
         txtScan.Focus()
     End Sub
 
+    Private Sub txtScan_TextChanged(sender As Object, e As EventArgs) Handles txtScan.TextChanged
+
+    End Sub
 End Class
